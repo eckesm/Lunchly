@@ -29,6 +29,43 @@ class Customer {
 		return results.rows.map(c => new Customer(c));
 	}
 
+	/** find top 10 customers. */
+
+	static async top(topCount) {
+		const results = await db.query(
+			`SELECT c.id, 
+         c.first_name AS "firstName",  
+         c.last_name AS "lastName", 
+         c.phone, 
+         c.notes
+       FROM customers AS c
+       LEFT JOIN reservations AS r
+       ON c.id = r.customer_id
+       GROUP BY c.id
+       ORDER BY COUNT(*) DESC
+       LIMIT $1`,
+			[ topCount ]
+		);
+		return results.rows.map(c => new Customer(c));
+	}
+
+	/** find matching customers. */
+
+	static async search(searchName) {
+		const results = await db.query(
+			`SELECT id, 
+         first_name AS "firstName",  
+         last_name AS "lastName", 
+         phone, 
+         notes
+       FROM customers
+       WHERE LOWER(first_name) = LOWER($1) OR LOWER(last_name) = LOWER($1) OR LOWER(CONCAT(first_name,' ',last_name))=LOWER($1)
+       ORDER BY last_name, first_name`,
+			[ searchName ]
+		);
+		return results.rows.map(c => new Customer(c));
+	}
+
 	/** get a customer by ID. */
 
 	static async get(id) {
@@ -55,7 +92,11 @@ class Customer {
 
 	/** get customer's full name. */
 
-	fullName() {
+	// fullName() {
+	// 	return `${this.firstName} ${this.lastName}`;
+	// }
+
+	get fullName() {
 		return `${this.firstName} ${this.lastName}`;
 	}
 
